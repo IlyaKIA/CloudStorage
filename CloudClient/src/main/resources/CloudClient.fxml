@@ -56,6 +56,8 @@
             <AnchorPane prefHeight="20.0" prefWidth="200.0" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
                <children>
                   <Button alignment="CENTER_RIGHT" contentDisplay="RIGHT" layoutX="500.0" mnemonicParsing="false" prefHeight="23.0" prefWidth="23.0" style="-fx-background-color: yellow;" text="Menu" textAlignment="CENTER" textOverrun="CLIP" />
+                  <Button layoutX="8.0" mnemonicParsing="false" onAction="#deleteFile" text="Delete" />
+                  <Button layoutX="59.0" mnemonicParsing="false" text="Rename" />
                </children></AnchorPane>
          </top>
       </BorderPane>

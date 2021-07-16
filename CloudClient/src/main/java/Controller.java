@@ -3,15 +3,21 @@ import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseEvent;
+import lombok.SneakyThrows;
+
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 
 public class Controller implements Initializable {
@@ -19,13 +25,45 @@ public class Controller implements Initializable {
     public ListView<String> localFileList;
     public Label output;
     public ListView<String>  serverFileList;
+    public Button deleteFile;
     private ObjectEncoderOutputStream os;
     private ObjectDecoderInputStream is;
+    private String fileName;
 
     public void sendToServer(ActionEvent actionEvent) throws IOException {
-        String fileName = localFileList.getSelectionModel().getSelectedItem();
-        os.writeObject(new FileMessage(Paths.get("dir", fileName)));
-        os.flush();
+        try {
+            fileName = localFileList.getSelectionModel().getSelectedItem();
+            if(serverFileList.getItems().stream().noneMatch(p -> p.equals(fileName))) {
+                os.writeObject(new FileMessage(Paths.get("dir", fileName))); //TODO: catalog address
+                os.flush();
+            } else {
+                Platform.runLater(() -> output.setText("Status: File already exists"));
+            }
+        } catch (IOException e) {
+            Platform.runLater(() -> output.setText("Status: Network error"));
+        }
+    }
+
+
+    public void sendFromServer(ActionEvent actionEvent) {
+        try {
+            fileName = serverFileList.getSelectionModel().getSelectedItem();
+            if(localFileList.getItems().stream().noneMatch(p -> p.equals(fileName))) {
+                os.writeObject(new FileRequest(Paths.get("server_dir", fileName))); //TODO: set user catalog
+                os.flush();
+            } else {
+                Platform.runLater(() -> output.setText("Status: File already exists"));
+            }
+        } catch (IOException e) {
+            Platform.runLater(() -> output.setText("Status: Network error"));
+        }
+    }
+    public void deleteFile(ActionEvent actionEvent) {
+        //TODO: Checking  active list to delete item
+        fileName = serverFileList.getSelectionModel().getSelectedItem();
+        Paths.get("server_dir", fileName).toFile().delete();
+        serverFileList.getItems().remove(fileName);
+        Platform.runLater(() -> output.setText("Status: " + "File successfully deleted"));
     }
 
     @Override
@@ -49,8 +87,25 @@ public class Controller implements Initializable {
                             case SIMPLE_MESSAGE:
                                 Message message = (Message) command;
                                 Platform.runLater(() -> output.setText("Status: " + message.toString()));
+                                if (message.toString().equals("File sending successful")) {
+                                    Platform.runLater(() -> serverFileList.getItems().add(fileName));
+                                }
                                 break;
-                        }
+                            case FILE_MESSAGE:
+                                FileMessage inputFile = (FileMessage) command;
+                                try (FileOutputStream fos = new FileOutputStream(Paths.get("dir", inputFile.getName()).toString())) {
+                                    fos.write(inputFile.getData());
+                                    Platform.runLater(() -> {
+                                        localFileList.getItems().add(inputFile.getName());
+                                        //TODO: Sort file list
+                                        output.setText("Status: " + "File successful downloaded");
+                                    });
+
+                                } catch (Exception e) {
+                                    Platform.runLater(() -> output.setText("Status:" + "File download error"));
+                                }
+                                break;
+                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -62,17 +117,10 @@ public class Controller implements Initializable {
         } catch (Exception e) {
             Platform.runLater(() -> output.setText("Status: Connection failed"));
         }
-
     }
 
     public void exitApp(MouseEvent mouseEvent) {
-
     }
 
-    public void sendFromServer(ActionEvent actionEvent) {
-    }
 
-    public void setServerFileList(ListView<String> serverFileList) {
-        this.serverFileList = serverFileList;
-    }
 }

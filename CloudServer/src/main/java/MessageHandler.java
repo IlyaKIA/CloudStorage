@@ -11,7 +11,6 @@ import java.util.List;
 
 @Slf4j
 public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand> {
-    private List<String> serverFileList;
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AbstractCommand command) {
@@ -34,14 +33,18 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                 }
                 ctx.writeAndFlush(new Message("Server file list refreshed"));
                 break;
-            case LIST_REQUEST:
-                    ListRequest listRequest = (ListRequest) command;
-                    serverFileList = listRequest.getFileNameList();
+//            case LIST_REQUEST:
+//                    ListRequest listRequest = (ListRequest) command;
+//                List<String> serverFileList = listRequest.getFileNameList();
+//                break;
+            case FILE_REQUEST:
+                FileRequest requestedFileName = (FileRequest) command;
+                try {
+                    ctx.writeAndFlush(new FileMessage(Paths.get("server_dir/", requestedFileName.getName())));
+                } catch (Exception e) {
+                    ctx.writeAndFlush(new Message("Sending error"));
+                }
                 break;
         }
-    }
-
-    public List<String> getServerFileList() {
-        return serverFileList;
     }
 }
