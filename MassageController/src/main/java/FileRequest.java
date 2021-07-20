@@ -9,8 +9,8 @@ public class FileRequest extends AbstractCommand {
 
     private final String name;
 
-    public FileRequest(Path path) {
-        name = path.getFileName().toString();
+    public FileRequest(String name) {
+        this.name = name;
     }
 
     @Override

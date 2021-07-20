@@ -3,106 +3,132 @@ import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
-import lombok.SneakyThrows;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 
 public class Controller implements Initializable {
 
-    public ListView<String> localFileList;
-    public Label output;
-    public ListView<String>  serverFileList;
-    public Button deleteFile;
     private ObjectEncoderOutputStream os;
     private ObjectDecoderInputStream is;
+    public ListView<String> localFileList;
+    public ListView<String>  serverFileList;
+    public Label output;
+    public TextField serverPath;
+    public TextField  clientPath;
     private String fileName;
+    private Path currentDir;
 
     public void sendToServer(ActionEvent actionEvent) throws IOException {
         try {
             fileName = localFileList.getSelectionModel().getSelectedItem();
             if(serverFileList.getItems().stream().noneMatch(p -> p.equals(fileName))) {
-                os.writeObject(new FileMessage(Paths.get("dir", fileName))); //TODO: catalog address
+                os.writeObject(new FileMessage(Paths.get(currentDir.toString(), fileName))); //TODO: catalog address
                 os.flush();
             } else {
-                Platform.runLater(() -> output.setText("Status: File already exists"));
+                statusUpdater("File already exists");
             }
         } catch (IOException e) {
-            Platform.runLater(() -> output.setText("Status: Network error"));
+            statusUpdater("Network error");
         }
     }
 
 
-    public void sendFromServer(ActionEvent actionEvent) {
+    public void downloadFromServer(ActionEvent actionEvent) {
         try {
             fileName = serverFileList.getSelectionModel().getSelectedItem();
             if(localFileList.getItems().stream().noneMatch(p -> p.equals(fileName))) {
-                os.writeObject(new FileRequest(Paths.get("server_dir", fileName))); //TODO: set user catalog
+                os.writeObject(new FileRequest(fileName)); //TODO: set user catalog
                 os.flush();
             } else {
-                Platform.runLater(() -> output.setText("Status: File already exists"));
+                statusUpdater("File already exists");
             }
         } catch (IOException e) {
-            Platform.runLater(() -> output.setText("Status: Network error"));
+            statusUpdater("Network error");
         }
     }
-    public void deleteFile(ActionEvent actionEvent) {
-        //TODO: Checking  active list to delete item
+    public void deleteServerFile(ActionEvent actionEvent) {
         fileName = serverFileList.getSelectionModel().getSelectedItem();
-        Paths.get("server_dir", fileName).toFile().delete();
-        serverFileList.getItems().remove(fileName);
-        Platform.runLater(() -> output.setText("Status: " + "File successfully deleted"));
+        try {
+            os.writeObject(new DeleteRequest(fileName));
+            os.flush();
+
+        } catch (IOException e) {
+            statusUpdater("Error deleting file from server");
+        }
+    }
+    public void deleteLocalFile(ActionEvent actionEvent) {
+        fileName = localFileList.getSelectionModel().getSelectedItem();
+        boolean localFileDeletingStatus;
+        localFileDeletingStatus = currentDir.resolve(fileName).toFile().delete();
+        if(localFileDeletingStatus) statusUpdater("Local file " + fileName + " successfully deleted");
+        else statusUpdater("Local file " + fileName + " deleting error");
+        try {
+            refreshClientView();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
+            currentDir = Paths.get("dir").toAbsolutePath();
             Socket socket = new Socket("localhost", 8189);
             os = new ObjectEncoderOutputStream(socket.getOutputStream());
             is = new ObjectDecoderInputStream(socket.getInputStream());
-            File dir = new File("dir");
-            localFileList.getItems().addAll(dir.list());
+            refreshClientView();
+            addNavigationListeners();
             os.writeObject(new ListMessage());
             Thread readThread = new Thread(() -> {
                 try {
                     while (true) {
                         AbstractCommand command = (AbstractCommand) is.readObject();
                         switch (command.getType()) {
-                            case LIST_REQUEST:
-                                ListRequest listRequest = (ListRequest) command;
-                                Platform.runLater(() -> serverFileList.getItems().addAll(listRequest.getFileNameList()));
+                            case LIST_RESPONSE:
+                                ListResponse listResponse = (ListResponse) command;
+                                List<String> serverFilesNames = new ArrayList<>();
+                                if(!listResponse.isRoot()){
+                                    serverFilesNames.add("..");
+                                }
+                                serverFilesNames.addAll(listResponse.getFileNameList());
+                                refreshServerView(serverFilesNames);
+                                break;
+                            case PATH_RESPONSE:
+                                PathUpResponse pathResponse = (PathUpResponse) command;
+                                String path = pathResponse.getPath();
+                                Platform.runLater(() -> serverPath.setText(path));
                                 break;
                             case SIMPLE_MESSAGE:
                                 Message message = (Message) command;
-                                Platform.runLater(() -> output.setText("Status: " + message.toString()));
-                                if (message.toString().equals("File sending successful")) {
-                                    Platform.runLater(() -> serverFileList.getItems().add(fileName));
-                                }
+                                statusUpdater(message.toString());
                                 break;
                             case FILE_MESSAGE:
                                 FileMessage inputFile = (FileMessage) command;
-                                try (FileOutputStream fos = new FileOutputStream(Paths.get("dir", inputFile.getName()).toString())) {
+                                try (FileOutputStream fos = new FileOutputStream(currentDir.resolve(inputFile.getName()).toString())) {
                                     fos.write(inputFile.getData());
+                                    refreshClientView();
                                     Platform.runLater(() -> {
-                                        localFileList.getItems().add(inputFile.getName());
                                         //TODO: Sort file list
-                                        output.setText("Status: " + "File successful downloaded");
+                                        statusUpdater("File successful downloaded");
                                     });
 
                                 } catch (Exception e) {
-                                    Platform.runLater(() -> output.setText("Status:" + "File download error"));
+                                    statusUpdater("File download error");
                                 }
                                 break;
                          }
@@ -113,14 +139,73 @@ public class Controller implements Initializable {
             });
             readThread.setDaemon(true);
             readThread.start();
-            Platform.runLater(() -> output.setText("Status: Connected"));
+            statusUpdater("Connected");
         } catch (Exception e) {
-            Platform.runLater(() -> output.setText("Status: Connection failed"));
+            statusUpdater("Connection failed");
         }
     }
 
     public void exitApp(MouseEvent mouseEvent) {
     }
 
+    private void refreshClientView() throws IOException {
+        clientPath.setText(currentDir.toString());
 
+        List<String> names = Files.list(currentDir)
+                .map(p -> p.getFileName().toString())
+                .collect(Collectors.toList());
+        Platform.runLater(() -> {
+            localFileList.getItems().clear();
+            localFileList.getItems().add("..");
+            localFileList.getItems().addAll(names);
+        });
+    }
+    private void refreshServerView(List<String> names) {
+        Platform.runLater(() -> {
+            serverFileList.getItems().clear();
+            serverFileList.getItems().addAll(names);
+        });
+    }
+
+    private void addNavigationListeners() {
+        localFileList.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                String item = localFileList.getSelectionModel().getSelectedItem();
+                Path newPath;
+                if (item.equals("..")) {
+                    newPath= currentDir.getParent();
+                } else {
+                    newPath = currentDir.resolve(item);
+                }
+                if (Files.isDirectory(newPath)) {
+                    currentDir = newPath;
+                    try {
+                        refreshClientView();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        serverFileList.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                String item = serverFileList.getSelectionModel().getSelectedItem();
+                try {
+                    if (item.equals("..")){
+                        os.writeObject(new PathUpRequest());
+                        os.flush();
+                    } else {
+                        os.writeObject(new PathInRequest(item));
+                        os.flush();
+                    }
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
+        });
+    }
+    private void statusUpdater (String msg){
+        Platform.runLater(() -> output.setText("Status: " + msg));
+    }
 }
