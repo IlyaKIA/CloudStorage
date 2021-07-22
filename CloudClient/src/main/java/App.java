@@ -10,7 +10,8 @@ import java.util.Objects;
 public class App extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent parent = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("CloudClient.fxml")));
+        Parent parent = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("SignIn.fxml")));
+        primaryStage.setTitle("Cloud storage");
         primaryStage.setScene(new Scene(parent));
         primaryStage.show();
     }
