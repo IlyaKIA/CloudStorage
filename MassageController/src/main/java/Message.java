@@ -1,12 +1,8 @@
 import lombok.AllArgsConstructor;
-import lombok.Data;
-
-import java.io.Serializable;
 
 @AllArgsConstructor
-@Data
 public class Message extends AbstractCommand {
-    private String content;
+    private final String content;
 
     public String toString() {
         return this.content;

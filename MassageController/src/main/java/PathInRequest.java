@@ -1,8 +1,6 @@
 import lombok.Getter;
 import lombok.ToString;
 
-import java.nio.file.Path;
-
 @ToString
 @Getter
 public class PathInRequest extends AbstractCommand {

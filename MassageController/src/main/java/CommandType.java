@@ -8,5 +8,9 @@ public enum CommandType {
     SIMPLE_MESSAGE,
     PATH_IN_REQUEST,
     PATH_RESPONSE,
-    PATCH_UP
+    PATCH_UP,
+    AUTH_REQUEST,
+    AUTH_RESPONSE,
+    REG_REQUEST,
+    MK_DIR_REQUEST
 }

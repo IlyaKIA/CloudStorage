@@ -1,20 +1,20 @@
+import UsersDB.DB_Const;
+import UsersDB.DB_Handler;
+import UsersDB.User;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @Slf4j
 public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand> {
     private Path currentPath;
-
-    public MessageHandler() {
-        currentPath = Paths.get("server_dir");
-    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AbstractCommand command) {
@@ -32,6 +32,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                 break;
             case LIST_MESSAGE:
                 try {
+                    ctx.writeAndFlush(new Message("Server file list refreshing"));
                     ctx.writeAndFlush(new ListResponse(currentPath));
                     ctx.writeAndFlush(new PathUpResponse(currentPath.toString()));
                 } catch (IOException e) {
@@ -84,6 +85,52 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                     ctx.writeAndFlush(new Message("File " + request.fileName + " deleted successful"));
                 } else {
                     ctx.writeAndFlush(new Message("File " + request.fileName + " deleting error"));
+                }
+                break;
+            case AUTH_REQUEST:
+                AuthenticationRequest authRequest = (AuthenticationRequest) command;
+                User user = new User();
+                user.setLogin(authRequest.getLoginText());
+                user.setPassword(authRequest.getPasswordText());
+                ResultSet resSet = new DB_Handler().getUser(user);
+                try {
+                        resSet.next();
+                        user.setFirstName(resSet.getString(DB_Const.USER_FIRSTNAME));
+                        user.setLastName(resSet.getString(DB_Const.USER_LASTNAME));
+                        currentPath = Paths.get(user.getLogin()); //TODO: I can't set structure 'server/User', where User directory is ROOT..
+                        if (!Files.exists(currentPath)) {
+                            Files.createDirectory(currentPath);
+                        }
+                        ctx.writeAndFlush(new AuthenticationResponse(user));
+                } catch (SQLException throwables) {
+                    log.error("Error: {}", throwables.getClass());
+                    ctx.writeAndFlush(new Message("Authentication failed"));
+                } catch (IOException e) {
+                    log.error("Error: {}", e.getClass());
+                }
+                break;
+            case REG_REQUEST:
+                RegistrationRequest regMSG = (RegistrationRequest) command;
+                User newUser = new User(regMSG.getFirstNameText(), regMSG.getLastNameText(), regMSG.getLoginText(), regMSG.getPasswordText());
+                try {
+                    new DB_Handler().signUpUser(newUser.getLogin(),newUser.getPassword(), newUser.getFirstName(), newUser.getLastName());
+                    ctx.writeAndFlush(new Message("Registration successful"));
+                } catch (SQLException throwables) {
+                    log.debug("message: {}", "User already exists or data base error");
+                    ctx.writeAndFlush(new Message("User already exists or data base error"));
+                }
+                break;
+            case MK_DIR_REQUEST:
+                MkDirRequest mkDirRequest = (MkDirRequest) command;
+                currentPath = currentPath.resolve(mkDirRequest.getDirName());
+                currentPath.toFile().mkdir();
+                currentPath = currentPath.getParent();
+                try {
+                    ctx.writeAndFlush(new ListResponse(currentPath));
+                    ctx.writeAndFlush(new Message("A new directory has been added"));
+                } catch (IOException e) {
+                    log.debug("message: {}", "Error making directory to server");
+                    ctx.writeAndFlush(new Message("Error making directory to server"));
                 }
                 break;
         }

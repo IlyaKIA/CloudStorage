@@ -7,66 +7,71 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="400.0" maxWidth="600.0" minHeight="400.0" minWidth="600.0" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="SignInController">
-   <children>
-      <AnchorPane layoutY="40.0" prefHeight="320.0" prefWidth="600.0" style="-fx-background-color: black;">
-         <children>
-            <PasswordField fx:id="passw_field" layoutX="175.0" layoutY="160.0" prefHeight="36.0" prefWidth="251.0" promptText="password">
-               <font>
-                  <Font name="Century" size="14.0" />
-               </font>
-            </PasswordField>
-            <Label layoutX="221.0" layoutY="14.0" style="col: white;" text="Sign in" textFill="WHITE">
-               <font>
-                  <Font name="Century" size="48.0" />
-               </font>
-            </Label>
-            <Button fx:id="login_butt" layoutX="225.0" layoutY="240.0" mnemonicParsing="false" prefHeight="51.0" prefWidth="151.0" style="-fx-background-color: white;" text="Login">
-               <font>
-                  <Font name="Century" size="24.0" />
-               </font>
-            </Button>
-            <TextField fx:id="login_field" layoutX="175.0" layoutY="109.0" prefHeight="36.0" prefWidth="251.0" promptText="login">
-               <font>
-                  <Font name="Century" size="14.0" />
-               </font>
-            </TextField>
-            <Button fx:id="signUp_butt" layoutX="489.0" layoutY="277.0" mnemonicParsing="false" prefHeight="28.0" prefWidth="90.0" style="-fx-background-color: black;" text="Sign up" textFill="WHITE">
-               <font>
-                  <Font name="Century" size="14.0" />
-               </font>
-            </Button>
-         </children>
-      </AnchorPane>
-      <Label layoutX="-17.0" layoutY="3.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
+<AnchorPane maxHeight="400.0" maxWidth="600.0" minHeight="400.0" minWidth="600.0" prefHeight="400.0" prefWidth="600.0"
+            style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="SignIn_Controller">
+   <AnchorPane layoutY="40.0" prefHeight="320.0" prefWidth="600.0" style="-fx-background-color: black;">
+      <TextField fx:id="login_field" layoutX="175.0" layoutY="109.0" prefHeight="36.0" prefWidth="251.0"
+                 promptText="login">
          <font>
-            <Font name="Century" size="24.0" />
+            <Font name="Century" size="14.0"/>
+         </font>
+      </TextField>
+      <PasswordField fx:id="passw_field" layoutX="175.0" layoutY="160.0" prefHeight="36.0" prefWidth="251.0"
+                     promptText="password">
+         <font>
+            <Font name="Century" size="14.0"/>
+         </font>
+      </PasswordField>
+      <Button fx:id="login_butt_id" layoutX="225.0" layoutY="240.0" mnemonicParsing="false" onAction="#login_butt"
+              prefHeight="51.0" prefWidth="151.0" style="-fx-background-color: white;" text="Login">
+         <font>
+            <Font name="Century" size="24.0"/>
+         </font>
+      </Button>
+      <Label layoutX="221.0" layoutY="14.0" style="col: white;" text="Sign in" textFill="WHITE">
+         <font>
+            <Font name="Century" size="48.0"/>
          </font>
       </Label>
-      <Label layoutX="245.0" layoutY="3.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
+      <Button fx:id="signUp_butt" layoutX="489.0" layoutY="277.0" mnemonicParsing="false" onAction="#SignUpButt"
+              prefHeight="28.0" prefWidth="90.0" style="-fx-background-color: black;" text="Sign up"
+              textFill="WHITE">
          <font>
-            <Font name="Century" size="24.0" />
+            <Font name="Century" size="14.0"/>
          </font>
-      </Label>
-      <Label layoutX="530.0" layoutY="3.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
-         <font>
-            <Font name="Century" size="24.0" />
-         </font>
-      </Label>
-      <Label layoutX="-139.0" layoutY="362.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
-         <font>
-            <Font name="Century" size="24.0" />
-         </font>
-      </Label>
-      <Label layoutX="113.0" layoutY="362.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
-         <font>
-            <Font name="Century" size="24.0" />
-         </font>
-      </Label>
-      <Label layoutX="381.0" layoutY="362.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
-         <font>
-            <Font name="Century" size="24.0" />
-         </font>
-      </Label>
-   </children>
+      </Button>
+      <Label fx:id="statusText" alignment="CENTER" layoutX="18.0" layoutY="211.0" prefHeight="17.0" prefWidth="565.0"
+             textAlignment="CENTER" textFill="RED"/>
+   </AnchorPane>
+   <Label layoutX="-17.0" layoutY="3.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
+      <font>
+         <Font name="Century" size="24.0"/>
+      </font>
+   </Label>
+   <Label layoutX="245.0" layoutY="3.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
+      <font>
+         <Font name="Century" size="24.0"/>
+      </font>
+   </Label>
+   <Label layoutX="530.0" layoutY="3.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
+      <font>
+         <Font name="Century" size="24.0"/>
+      </font>
+   </Label>
+   <Label layoutX="-139.0" layoutY="362.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
+      <font>
+         <Font name="Century" size="24.0"/>
+      </font>
+   </Label>
+   <Label layoutX="113.0" layoutY="362.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
+      <font>
+         <Font name="Century" size="24.0"/>
+      </font>
+   </Label>
+   <Label layoutX="381.0" layoutY="362.0" style="col: white;" text="Cloud storage" textFill="#000000bf">
+      <font>
+         <Font name="Century" size="24.0"/>
+      </font>
+   </Label>
 </AnchorPane>

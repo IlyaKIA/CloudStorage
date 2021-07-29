@@ -1,6 +1,4 @@
-StringHandler.class
 CommandType.class
 FileMessage.class
-AbstractCommand.class
-SimpleHandler.class
 Message.class
+AbstractCommand.class
