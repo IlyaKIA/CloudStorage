@@ -5,6 +5,5 @@ Cloud file storage:
 - storing user credentials in a MySQL database.
 
 Screenshots:
-![alt text](https://github.com/IlyaKIA/CloudStorage/tree/main/dir/Cloud storage.png?raw=true)
-![alt text](https://github.com/IlyaKIA/CloudStorage/tree/main/dir/CloudSignIn.jpg?raw=true)
-![alt text](https://github.com/IlyaKIA/CloudStorage/tree/main/dir/CloudSignUp.jpg?raw=true)
+![SignIn form](/dir/CloudSignIn.jpg)
+![SignUp form](/dir/CloudSignUp.jpg)
